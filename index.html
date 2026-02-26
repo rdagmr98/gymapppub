@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gym Coach Pro & Gym Logbook - Performance Tracking</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;700&family=Inter:wght@400;700;900&display=swap');
+        
+        :root {
+            --gold: #FFD700;
+            --cyan: #00F2FF;
+            --bg: #030303;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: white;
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+        }
+
+        .mono { font-family: 'JetBrains Mono', monospace; }
+
+        .card-glass {
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01));
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 32px;
+            transition: all 0.4s ease;
+        }
+
+        .page-content {
+            display: none;
+            opacity: 0;
+        }
+
+        .page-active {
+            display: block !important;
+            animation: slideFade 0.6s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+        }
+
+        @keyframes slideFade {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .image-banner {
+            height: 500px;
+            background-size: cover;
+            background-position: center;
+            border-radius: 32px;
+            position: relative;
+            overflow: hidden;
+            filter: grayscale(0.8);
+            transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+            cursor: pointer;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .image-banner:hover {
+            filter: grayscale(0);
+            transform: scale(1.02);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.4) 50%, transparent 100%);
+            display: flex;
+            align-items: flex-end;
+            padding: 3rem;
+        }
+
+        .nav-back-arrow {
+            position: fixed;
+            top: 2rem;
+            left: 2rem;
+            width: 50px;
+            height: 50px;
+            background: rgba(0,0,0,0.5);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 100;
+            transition: all 0.3s;
+            backdrop-filter: blur(10px);
+        }
+
+        .nav-back-arrow:hover {
+            background: white;
+            color: black;
+            transform: translateX(-5px);
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
+
+        #recovery-bar {
+            height: 4px;
+            background: var(--cyan);
+            width: 0%;
+            transition: width 1s linear;
+            box-shadow: 0 0 15px var(--cyan);
+        }
+
+        .feature-tag {
+            background: rgba(255,255,255,0.05);
+            padding: 0.5rem 1rem;
+            border-radius: 99px;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .gradient-text-gold {
+            background: linear-gradient(to bottom, #FFD700, #B8860B);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .gradient-text-cyan {
+            background: linear-gradient(to bottom, #00F2FF, #008B8B);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: white;
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+        }
+
+        .mono { font-family: 'JetBrains Mono', monospace; }
+
+        .card-glass {
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01));
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 32px;
+            transition: all 0.4s ease;
+        }
+
+        .page-content {
+            display: none;
+            animation: slideFade 0.6s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+        }
+
+        .page-active {
+            display: block;
+        }
+
+        @keyframes slideFade {
+            from { opacity: 0; transform: translateY(40px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .btn-gold {
+            background: var(--gold);
+            color: black;
+            font-weight: 900;
+            padding: 1.25rem 2.5rem;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(255, 215, 0, 0.1);
+        }
+
+        .btn-cyan {
+            background: var(--cyan);
+            color: black;
+            font-weight: 900;
+            padding: 1.25rem 2.5rem;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0, 242, 255, 0.1);
+        }
+
+        .feature-item {
+            border-left: 2px solid rgba(255,255,255,0.1);
+            padding-left: 1.5rem;
+            transition: border-color 0.3s;
+        }
+
+        .feature-item:hover {
+            border-left-color: currentColor;
+        }
+
+        .mockup-container {
+            perspective: 1000px;
+        }
+
+        .mockup-inner {
+            transform: rotateY(-10deg) rotateX(5deg);
+            transition: transform 0.5s ease;
+        }
+
+        .mockup-container:hover .mockup-inner {
+            transform: rotateY(0deg) rotateX(0deg);
+        }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+    </style>
+</head>
+<body class="min-h-screen">
+
+    <!-- HOME PAGE -->
+    <main id="page-home" class="page-content page-active pt-32 p-6 md:p-12 max-w-7xl mx-auto pb-32">
+        <header class="text-center mb-24">
+            <div class="mono text-[10px] tracking-[0.5em] text-yellow-500 mb-4 uppercase">The Ultimate Fitness Ecosystem</div>
+            <h1 class="text-7xl md:text-[9rem] font-black tracking-tighter mb-4 leading-none uppercase">
+                GYM <span class="text-transparent bg-clip-text bg-gradient-to-b from-white to-white/20">APP.</span>
+            </h1>
+<p class="text-gray-500 text-xl font-light tracking-wide italic">Il legame digitale tra Coach e Atleta.</p>
+            <p class="text-gray-500 text-xl font-light tracking-wide italic">Accedi agli strumenti professionali per la trasformazione fisica.</p>
+        </header>
+
+        <section class="grid md:grid-cols-2 gap-10">
+            <!-- Banner Coach -->
+            <div onclick="showPage('page-pt')" class="image-banner group" style="background-image: url('https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=1470&auto=format&fit=crop');">
+                <div class="overlay">
+                    <div class="w-full">
+                        <span class="text-yellow-500 font-black mono text-[10px] uppercase tracking-widest">Professional Hub</span>
+                        <h4 class="text-4xl font-black uppercase italic mb-2">Gym Coach Pro</h4>
+                        <p class="text-gray-400 text-sm max-w-xs mb-4">Gestione atleti, programmazione avanzata e monitoraggio dati.</p>
+                        <div class="h-1 w-0 group-hover:w-full bg-yellow-500 transition-all duration-700"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Banner Atleta -->
+            <div onclick="showPage('page-client')" class="image-banner group" style="background-image: url('https://images.unsplash.com/photo-1517836357463-d25dfeac3438?q=80&w=1470&auto=format&fit=crop');">
+                <div class="overlay">
+                    <div class="w-full">
+                        <span class="text-cyan-500 font-black mono text-[10px] uppercase tracking-widest">Athlete Interface</span>
+                        <h4 class="text-4xl font-black uppercase italic mb-2">Gym Logbook</h4>
+                        <p class="text-gray-400 text-sm max-w-xs mb-4">Tracking in tempo reale, timer di recupero e monitoring dei progressi.</p>
+                        <div class="h-1 w-0 group-hover:w-full bg-cyan-500 transition-all duration-700"></div>
+                    </div>
+                </div>
+            </div>
+
+           
+        </section>
+    </main>
+
+    <!-- PAGINA GYM COACH PRO (DETTAGLIATA) -->
+    <section id="page-pt" class="page-content pt-32 p-6 md:p-12 max-w-7xl mx-auto pb-32">
+        <div class="nav-back-arrow" onclick="showPage('page-home')">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+        </div>
+        
+        <div class="grid lg:grid-cols-2 gap-16 items-start mb-24">
+            <div>
+		<span class="mono text-yellow-500 text-xs justify-center tracking-widest uppercase"> <br><br></span>
+                <span class="mono text-yellow-500 text-xs justify-center tracking-widest uppercase">The Professional Standard</span>
+                <h2 class="text-6xl md:text-8xl font-black italic uppercase text-white mt-4 mb-8 leading-none">Coach<span class="gradient-text-gold">PRO.</span></h2>
+                <div class="space-y-10">
+                    <p class="text-gray-400 justify-center text-xl leading-relaxed">
+La pianificazione non è un foglio Excel, è un algoritmo vivente che evolve con i feedback dei tuoi clienti.
+                        Il cuore pulsante del tuo business di coaching. Gym Coach Pro trasforma dati grezzi in decisioni strategiche, permettendoti di gestire centinaia di atleti con la stessa cura di uno solo.
+                    </p>
+                    
+                    
+                </div>
+            </div>
+<div class="mockup-container">
+                <div class="mockup-inner card-glass p-8 border-yellow-500/30">
+                    <div class="bg-black/50 rounded-2xl p-6 border border-white/5 space-y-6">
+                        <div class="flex justify-between items-center border-b border-white/10 pb-4">
+                            <span class="text-yellow-500 font-bold">SCHEDA: IPERTROFIA A</span>
+                            <span class="badge-tech">ACTIVE</span>
+                        </div>
+                        <div class="space-y-3">
+                            <div class="p-4 bg-white/5 rounded-xl flex justify-between">
+                                <span class="text-sm">Panca Piana Bilanciere</span>
+                                <span class="text-yellow-500 text-xs font-bold">4 x 8 </span>
+                            </div>
+                            <div class="p-4 bg-white/5 rounded-xl flex justify-between">
+                                <span class="text-sm">Croci ai cavi alti</span>
+                                <span class="text-yellow-500 text-xs font-bold">3 x 12 </span>
+                            </div>
+                        </div>
+
+                        <div class="p-4 bg-yellow-500/5 border border-yellow-500/20 rounded-xl">
+                            <span class="text-[10px] text-yellow-500 font-bold uppercase block mb-1">Nota per Atleta:</span>
+                            <p class="text-xs italic text-gray-400">"Mantieni l'adduzione scapolare in tutto il ROM."</p>
+                        </div>
+                    </div>
+                </div>
+
+<div class="grid gap-8">
+<br>
+                        <div class="flex gap-6 items-start">
+                            <div class="w-14 h-14 rounded-3xl bg-yellow-500 flex items-center justify-center shrink-0 shadow-[0_0_20px_rgba(255,215,0,0.3)]">
+                                <svg class="w-6 h-6 text-black" fill="currentColor" viewBox="0 0 20 20"><path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z"></path></svg>
+                            </div>
+                            <div>
+                                <h4 class="text-xl font-bold uppercase italic text-white mb-2">Multi-Athlete Control</h4>
+                                <p class="text-gray-500 text-sm">Visione d'insieme su tutti i tuoi clienti. Ricevi le loro performance e monitora i loro progressi.</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-6 items-start">
+                            <div class="w-14 h-14 rounded-3xl bg-yellow-500 flex items-center justify-center shrink-0 shadow-[0_0_20px_rgba(255,215,0,0.3)]">
+                                <svg class="w-6 h-6 text-black" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"></path></svg>
+                            </div>
+                            <div>
+                                <h4 class="text-xl font-bold uppercase italic text-white mb-2">Automated Macro-Cycles</h4>
+                                <p class="text-gray-500 text-sm">Componi protocolli personalizzati facilmente</p>
+                            </div>
+                        </div>
+                    </div>
+            </div>
+                 <div class="grid gap-20">
+            <div class="space-y-12">
+                
+                
+                <div class="feature-item text-yellow-500">
+                    <h4 class="font-bold text-xl mb-2 text-white">Personalizzazione dei protocolli</h4>
+                    <p class="text-gray-500 text-sm">Crea il protocollo di allenamento attagliato al cliente.</p>
+                </div>
+
+                <div class="feature-item text-yellow-500">
+                    <h4 class="font-bold text-xl mb-2 text-white">Advanced Routine Editor</h4>
+                    <p class="text-gray-500 text-sm">Sistema a blocchi espandibili. Definisci il distretto, seleziona l'esercizio e imposta parametri rapidamente con i suggerimenti proposti.</p>
+                </div>
+
+                <div class="feature-item text-yellow-500">
+                    <h4 class="font-bold text-xl mb-2 text-white">Real-Time Sync Push</h4>
+                    <p class="text-gray-300 text-sm">Modifica una nota tecnica ("gomiti stretti") mentre il tuo atleta è in palestra: la vedrà apparire sul suo Logbook istantaneamente.</p>
+
+                </div>
+
+        <div class="feature-item text-yellow-500">
+                    <h4 class="font-bold text-xl mb-2 text-white">Resutls monitoring</h4>
+                    <p class="text-gray-300 text-sm">Controlla i progressi dei clienti nei vari esercizi attraverso grafici dei trend di pesi e ripetizioni diversificati per serie.</p>
+                </div> 
+
+            
+        </div>
+    </section>
+
+    
+    <!-- PAGINA GYM LOGBOOK (DETTAGLIATA) -->
+    <section id="page-client" class="page-content pt-32 p-6 md:p-12 max-w-7xl mx-auto pb-32">
+        <div class="nav-back-arrow" onclick="showPage('page-home')">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+        </div>
+
+        <div class="grid lg:grid-cols-2 gap-16 items-start">
+            <div class="order-2 lg:order-1 space-y-8">
+                <div class="card-glass p-8 border-cyan-500/20 bg-cyan-500/5 overflow-hidden">
+                    <div class="flex justify-between items-center mb-10">
+                        <h3 class="text-3xl font-black italic uppercase text-cyan-500">Live Training</h3>
+                        <div id="recovery-timer-display" class="hidden text-right">
+                            <div id="rest-clock" class="text-3xl font-mono font-black text-cyan-500">01:30</div>
+                        </div>
+                    </div>
+                    <div class="bg-black/60 p-6 rounded-3xl border border-white/10 mb-6">
+                        <div class="flex justify-between mb-2">
+                            <h4 class="text-xs font-bold uppercase text-gray-400">Panca Piana (S3)</h4>
+                            <span class="text-cyan-500 text-xs font-bold mono">RPE 8.5</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="text-center">
+                                <label class="text-[10px] uppercase text-gray-600 mb-1 block">Carico (KG)</label>
+                                <input type="number" value="100" class="w-full bg-white/5 p-4 rounded-2xl text-2xl font-black text-center focus:ring-1 focus:ring-cyan-500 outline-none">
+                            </div>
+                            <div class="text-center">
+                                <label class="text-[10px] uppercase text-gray-600 mb-1 block">Ripetizioni</label>
+                                <input type="number" value="8" class="w-full bg-white/5 p-4 rounded-2xl text-2xl font-black text-center focus:ring-1 focus:ring-cyan-500 outline-none">
+                            </div>
+                        </div>
+                    </div>
+                    <button id="btn-log-set" onclick="logSet()" class="w-full py-5 bg-cyan-500 text-black font-black uppercase rounded-2xl hover:brightness-110 transition-all shadow-[0_10px_30px_rgba(0,242,255,0.2)]">Salva Serie ✔</button>
+                    <div id="recovery-bar" class="mt-4"></div>
+                </div>
+                
+
+            </div>
+
+            <div class="order-1 lg:order-2">
+                <span class="mono text-cyan-500 text-xs tracking-widest uppercase">The Athlete Interface</span>
+                <h2 class="text-6xl md:text-8xl font-black italic uppercase text-white mt-4 mb-8 leading-none">Log <span class="gradient-text-cyan">BOOK.</span></h2>
+                <div class="space-y-10">
+                    <p class="text-gray-400 text-xl leading-relaxed">
+                        L'interfaccia definitiva per chi si allena seriamente. Gym Logbook elimina le frizioni del tracciamento, permettendoti di rimanere concentrato sulla serie.
+                    </p>
+                    <div class="grid gap-6">
+                        <div class="p-8 rounded-3xl bg-white/5 border border-white/10 group hover:border-cyan-500/30 transition-all">
+                            <h4 class="text-cyan-500 font-black uppercase italic text-xl mb-3">Instant Feedback</h4>
+                            <p class="text-sm text-gray-400">Appena logghi una serie, il sistema confronta il dato con la settimana precedente e ti dice istantaneamente se sei in progressione o stagnazione. Al termine dell'esercizio puoi segnare come ti sei sentito: carico leggero, fastidi articolari o fatica estrema. Il coach saprà tutto.</p>
+                        </div>
+                        <div class="p-8 rounded-3xl bg-white/5 border border-white/10 group hover:border-cyan-500/30 transition-all">
+                            <h4 class="text-cyan-500 font-black uppercase italic text-xl mb-3">Zero Click Recovery</h4>
+                            <p class="text-sm text-gray-400">Il timer di recupero parte in automatico. Non toccare il telefono e torna sotto il bilanciere.</p>
+                        </div>
+
+			<div class="p-8 rounded-3xl bg-white/5 border border-white/10 group hover:border-cyan-500/30 transition-all">
+                            <h4 class="text-cyan-500 font-black uppercase italic text-xl mb-3">Gym buddy</h4>
+                            <p class="text-sm text-gray-400">L'app ti suggerisce, in base ai dati registrati, il target di ripetizioni, che peso utilizzare e quando aumentarlo.</p>
+                        </div>
+
+<div class="p-8 rounded-3xl bg-white/5 border border-white/10 group hover:border-cyan-500/30 transition-all">
+                            <h4 class="text-cyan-500 font-black uppercase italic text-xl mb-3">Visual Progression</h4>
+                            <p class="text-sm text-gray-400">Grafici integrati per vedere come la tua forza cresce nel tempo, direttamente sul tuo smartphone mentre sei in sala pesi.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+   
+
+
+    <script>
+        let charts = {};
+        let restInterval;
+
+        // Funzione di sicurezza per attendere il caricamento di Chart.js
+        function ensureChartLib(callback) {
+            if (typeof Chart !== 'undefined') {
+                callback();
+            } else {
+                console.log("Attesa caricamento libreria grafici...");
+                setTimeout(() => ensureChartLib(callback), 100);
+            }
+        }
+
+        function showPage(pageId) {
+            document.querySelectorAll('.page-content').forEach(p => { 
+                p.classList.remove('page-active'); 
+                p.style.display = 'none'; 
+            });
+            
+            const activePage = document.getElementById(pageId);
+            activePage.style.display = 'block';
+            
+            setTimeout(() => {
+                activePage.classList.add('page-active');
+                ensureChartLib(() => {
+                    if (pageId === 'page-pt') initCoachCharts();
+                    if (pageId === 'page-client') initClientCharts();
+                });
+            }, 50);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function logSet() {
+            startRestTimer(90);
+            const btn = document.getElementById('btn-log-set');
+            btn.innerText = "Logged! Rest...";
+            btn.classList.add('opacity-50');
+            setTimeout(() => {
+                btn.innerText = "Salva Serie ✔";
+                btn.classList.remove('opacity-50');
+            }, 3000);
+        }
+
+        function startRestTimer(seconds) {
+            clearInterval(restInterval);
+            const bar = document.getElementById('recovery-bar');
+            const display = document.getElementById('recovery-timer-display');
+            const clock = document.getElementById('rest-clock');
+            display.classList.remove('hidden');
+            let timeLeft = seconds;
+            const total = seconds;
+
+            restInterval = setInterval(() => {
+                timeLeft--;
+                const percent = ((total - timeLeft) / total) * 100;
+                bar.style.width = `${percent}%`;
+                const mins = Math.floor(timeLeft / 60);
+                const secs = timeLeft % 60;
+                clock.innerText = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+                if (timeLeft <= 0) {
+                    clearInterval(restInterval);
+                    bar.style.width = '0%';
+                    display.classList.add('hidden');
+                }
+            }, 1000);
+        }
+
+        function initCoachCharts() {
+            const ctx = document.getElementById('coachChart1');
+            if (!ctx) return;
+            if (charts['coach']) charts['coach'].destroy();
+            charts['coach'] = new Chart(ctx, {
+                type: 'line',
+                data: { 
+                    labels: ['Sett 1', 'Sett 2', 'Sett 3', 'Sett 4'], 
+                    datasets: [{ 
+                        label: 'Volume Totale',
+                        data: [12000, 12500, 12800, 13400], 
+                        borderColor: '#FFD700', 
+                        backgroundColor: 'rgba(255, 215, 0, 0.1)',
+                        fill: true,
+                        tension: 0.4,
+                        borderWidth: 3,
+                        pointBackgroundColor: '#FFD700'
+                    }] 
+                },
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    plugins: { legend: { display: false } },
+                    scales: { 
+                        y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: 'rgba(255,255,255,0.3)' } }, 
+                        x: { grid: { display: false }, ticks: { color: 'rgba(255,255,255,0.3)' } } 
+                    }
+                }
+            });
+        }
+
+        function initClientCharts() {
+            const ctx = document.getElementById('clientChart1');
+            if (!ctx) return;
+            if (charts['client']) charts['client'].destroy();
+            charts['client'] = new Chart(ctx, {
+                type: 'bar',
+                data: { 
+                    labels: ['Squat', 'Panca', 'Stacco', 'Military'], 
+                    datasets: [{ 
+                        data: [140, 110, 180, 75], 
+                        backgroundColor: '#00F2FF',
+                        borderRadius: 12,
+                        hoverBackgroundColor: '#FFFFFF'
+                    }] 
+                },
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    plugins: { legend: { display: false } },
+                    scales: { 
+                        y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: 'rgba(255,255,255,0.3)' } }, 
+                        x: { grid: { display: false }, ticks: { color: 'rgba(255,255,255,0.3)' } } 
+                    }
+                }
+            });
+        }
+
+        window.onload = () => {
+            // Aspetta che la libreria sia pronta prima di impostare i default
+            ensureChartLib(() => {
+                Chart.defaults.color = 'rgba(255,255,255,0.4)';
+                Chart.defaults.font.family = 'JetBrains Mono';
+            });
+        };
+    </script>
+</body>
+</html>
