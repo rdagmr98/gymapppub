@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no", shrink-to-fit=no">
     <title>Gym Coach Pro & Gym Logbook - Performance Tracking</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chart.js/3.9.1/chart.min.js"></script>
@@ -15,15 +15,19 @@
             --bg: #030303;
         }
 
-        body {
+/* RESET AGGRESSIVO PER Z FOLD / IPHONE */
+        html, body {
             background-color: var(--bg);
             color: white;
             font-family: 'Inter', sans-serif;
             margin: 0;
             padding: 0;
-            overflow-x: hidden;
+            width: 100%;
+            min-width: 100%;
+            overflow-x: hidden; /* Blocca lo scorrimento laterale */
+            position: relative;
+            touch-action: manipulation; /* Migliora la risposta al tocco */
         }
-
         .mono { font-family: 'JetBrains Mono', monospace; }
 
         .card-glass {
@@ -34,9 +38,35 @@
             transition: all 0.4s ease;
         }
 
+/* Impedisce alla pagina Coach di allargarsi troppo su schermi piccoli */
+#page-pt {
+    overflow-x: hidden !important;
+    width: 100% !important;
+}
+
+/* Ridimensiona il titolo CoachPRO solo su mobile (sotto i 768px) */
+@media (max-width: 767px) {
+    #page-pt h2 {
+        font-size: 12vw !important; /* Si adatta alla larghezza dello schermo */
+        word-wrap: break-word;
+    }
+    
+    /* Riduce i gap eccessivi che spingono il contenuto fuori */
+    #page-pt .grid {
+        gap: 1.5rem !important;
+    }
+}
+/* TITOLO FLUIDO: Si rimpicciolisce se lo schermo è meno di 400px (come il Fold chiuso) */
+        h1 {
+            font-size: clamp(2.5rem, 15vw, 9rem) !important;
+            line-height: 0.9;
+        }
+
         .page-content {
             display: none;
-            opacity: 0;
+            padding-top: 6rem; /* Spazio per la freccia */
+            width: 100%;
+            box-sizing: border-box;
         }
 
         .page-active {
@@ -94,6 +124,14 @@
             transition: all 0.3s;
             backdrop-filter: blur(10px);
         }
+
+@media (max-width: 767px) {
+    .nav-back-arrow {
+        position: absolute !important;
+        top: 1rem !important;
+        left: 1rem !important;
+    }
+}
 
         .nav-back-arrow:hover {
             background: white;
@@ -258,7 +296,7 @@
     </main>
 
     <!-- PAGINA GYM COACH PRO (DETTAGLIATA) -->
-    <section id="page-pt" class="page-content pt-32 p-6 md:p-12 max-w-7xl mx-auto pb-32">
+    <section id="page-pt" class="page-content pt-32 p-6 md:p-12 max-w-7xl 89mx-auto pb-32">
         <div class="nav-back-arrow" onclick="showPage('page-home')">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
         </div>
